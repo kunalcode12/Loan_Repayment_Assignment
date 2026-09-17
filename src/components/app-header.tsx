@@ -13,20 +13,28 @@ export function AppHeader() {
   const [signingOut, setSigningOut] = useState(false)
 
   const identity = user?.email ?? user?.displayName ?? 'Signed in'
+  const initial = identity.charAt(0).toUpperCase()
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-canvas/85 backdrop-blur-xl">
-      <div className="mx-auto flex h-18 w-full max-w-[84rem] items-center justify-between gap-4 px-6">
+    <header className="sticky top-0 z-20 border-b border-border bg-canvas/80 backdrop-blur-xl">
+      <div className="mx-auto flex h-16 w-full max-w-[88rem] items-center justify-between gap-4 px-6 lg:px-8">
         <Brand />
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <span
-            className="hidden max-w-[16rem] truncate text-[0.8125rem] text-ink-muted sm:block"
-            title={identity}
-          >
-            {identity}
-          </span>
+          <div className="hidden items-center gap-2.5 border-r border-border pr-3 sm:flex">
+            <span
+              aria-hidden="true"
+              className="rounded-sharp grid size-6 place-items-center border border-border-strong text-[0.625rem] font-medium text-ink-muted"
+            >
+              {initial}
+            </span>
+            <span className="max-w-[14rem] truncate text-[0.75rem] text-ink-muted" title={identity}>
+              {identity}
+            </span>
+          </div>
+
           <ThemeToggle />
+
           <Button
             variant="secondary"
             size="sm"

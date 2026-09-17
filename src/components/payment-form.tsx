@@ -6,9 +6,9 @@ import type { LoanDto, PositionDto } from '@/api/serializers'
 import { ApiError, recordPayment, type RecordPaymentResponse } from '@/lib/api-client'
 import { formatDate, formatMoney, pluralise } from '@/lib/format'
 import { Button } from './ui/button'
-import { Field } from './ui/field'
-import { Badge, Panel, PanelHeader } from './ui/surface'
 import { cn } from './ui/cn'
+import { Field } from './ui/field'
+import { Badge } from './ui/surface'
 
 /**
  * Record a payment.
@@ -78,23 +78,23 @@ export function PaymentForm({
     position.overdueAmount.paise > 0
       ? { label: 'Clear overdue', paise: position.overdueAmount.paise }
       : null,
-    position.nextDueAmount.paise > 0
-      ? { label: 'Two instalments', paise: loan.emi.paise * 2 }
-      : null,
+    position.nextDueAmount.paise > 0 ? { label: 'Two instalments', paise: loan.emi.paise * 2 } : null,
   ].filter((value): value is { label: string; paise: number } => value !== null)
 
   return (
-    <Panel className="space-y-6">
-      <PanelHeader
-        title="Record a payment"
-        description={
-          settled
-            ? 'This loan is fully settled. Anything received now would be held as an unallocated credit.'
-            : 'Allocated oldest instalment first, interest before principal.'
-        }
-      />
+    <section className="rounded-sharp animate-fade border border-border bg-surface">
+      <header className="space-y-1.5 border-b border-border px-6 py-5 sm:px-8">
+        <h2 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-ink">
+          Record a payment
+        </h2>
+        <p className="text-[0.75rem] leading-relaxed text-ink-muted">
+          {settled
+            ? 'This loan is settled. Anything received now is held as an unallocated credit.'
+            : 'Oldest instalment first, interest before principal.'}
+        </p>
+      </header>
 
-      <form onSubmit={onSubmit} className="space-y-5">
+      <form onSubmit={onSubmit} className="space-y-5 px-6 py-6 sm:px-8">
         <Field
           label="Amount received"
           type="number"
@@ -109,18 +109,21 @@ export function PaymentForm({
         />
 
         {suggestions.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-1.5">
             {suggestions.map((suggestion) => (
               <button
                 key={suggestion.label}
                 type="button"
                 onClick={() => setAmount((suggestion.paise / 100).toFixed(2))}
                 className={cn(
-                  'tabular rounded-lg border border-border px-3 py-1.5 text-[0.75rem] text-ink-muted',
-                  'transition-colors hover:border-border-strong hover:text-ink',
+                  'rounded-sharp tabular border border-border px-2.5 py-1.5 text-[0.6875rem] text-ink-muted',
+                  'transition-colors duration-150 hover:border-border-loud hover:text-ink',
                 )}
               >
-                {suggestion.label} · ₹{(suggestion.paise / 100).toFixed(2)}
+                {suggestion.label}
+                <span className="ml-1.5 text-ink-subtle">
+                  ₹{(suggestion.paise / 100).toFixed(2)}
+                </span>
               </button>
             ))}
           </div>
@@ -131,14 +134,14 @@ export function PaymentForm({
           type="date"
           required
           value={paymentDate}
-          hint="Payments dated after a due date are recorded as late; due dates never move."
+          hint="A payment dated after a due date is recorded as late; due dates never move."
           onChange={(event) => setPaymentDate(event.target.value)}
         />
 
         {error ? <ErrorNotice error={error} /> : null}
 
-        <div className="flex flex-wrap gap-3">
-          <Button type="submit" size="lg" loading={submitting}>
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" size="lg" loading={submitting} className="flex-1">
             Record payment
           </Button>
           {lastKey ? (
@@ -157,7 +160,7 @@ export function PaymentForm({
       </form>
 
       {result ? <AllocationReceipt result={result} /> : null}
-    </Panel>
+    </section>
   )
 }
 
@@ -165,13 +168,14 @@ function ErrorNotice({ error }: { error: ApiError | Error }) {
   const issues = error instanceof ApiError ? error.issues : []
 
   return (
-    <div role="alert" className="rounded-xl border border-danger/35 bg-danger-soft p-4">
-      <p className="text-[0.875rem] font-medium text-danger">{error.message}</p>
+    <div role="alert" className="rounded-sharp border border-danger/35 bg-danger-soft px-3.5 py-3">
+      <p className="text-[0.75rem] leading-relaxed font-medium text-danger">{error.message}</p>
       {issues.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-[0.8125rem] text-ink-muted">
+        <ul className="mt-2 space-y-1">
           {issues.map((issue) => (
-            <li key={`${issue.field}-${issue.message}`}>
-              <span className="font-mono text-[0.75rem]">{issue.field}</span> — {issue.message}
+            <li key={`${issue.field}-${issue.message}`} className="text-[0.75rem] text-ink-muted">
+              <span className="font-mono text-[0.6875rem] text-ink-subtle">{issue.field}</span>{' '}
+              {issue.message}
             </li>
           ))}
         </ul>
@@ -183,21 +187,22 @@ function ErrorNotice({ error }: { error: ApiError | Error }) {
 /** What the payment actually did, instalment by instalment. */
 function AllocationReceipt({ result }: { result: RecordPaymentResponse }) {
   return (
-    <div className="animate-rise space-y-4 rounded-xl border border-border bg-surface-muted/60 p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[0.875rem] font-medium text-ink">
-          {formatMoney(result.payment.amount)} on {formatDate(result.payment.paymentDate)}
+    <div className="animate-rise space-y-4 border-t border-border bg-surface-muted/50 px-6 py-5 sm:px-8">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="tabular text-[0.8125rem] font-medium text-ink">
+          {formatMoney(result.payment.amount)}
+          <span className="ml-2 text-ink-subtle">{formatDate(result.payment.paymentDate)}</span>
         </p>
         {result.duplicate ? (
-          <Badge tone="warning">Duplicate — not applied again</Badge>
+          <Badge tone="warning">Duplicate · not re-applied</Badge>
         ) : (
           <Badge tone="positive">Recorded</Badge>
         )}
       </div>
 
       {result.duplicate ? (
-        <p className="text-[0.8125rem] leading-relaxed text-ink-muted">
-          This idempotency key had already been used. The original payment and its allocation are
+        <p className="text-[0.75rem] leading-relaxed text-ink-muted">
+          That idempotency key had already been used. The original payment and its allocation are
           shown below; no balance changed.
         </p>
       ) : null}
@@ -207,32 +212,33 @@ function AllocationReceipt({ result }: { result: RecordPaymentResponse }) {
           {result.allocations.map((allocation) => (
             <li
               key={allocation.installmentId}
-              className="tabular flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-[0.8125rem]"
+              className="tabular flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-b border-border pb-2 text-[0.75rem] last:border-b-0 last:pb-0"
             >
               <span className="text-ink-muted">
-                Instalment {allocation.installmentNumber} · {formatDate(allocation.dueDate)}
+                <span className="font-mono text-[0.6875rem] text-ink-subtle">
+                  {String(allocation.installmentNumber).padStart(2, '0')}
+                </span>{' '}
+                {formatDate(allocation.dueDate)}
                 {allocation.daysLate > 0 ? (
-                  <span className="text-danger">
-                    {' '}
-                    · {pluralise(allocation.daysLate, 'day')} late
-                  </span>
+                  <span className="text-danger"> · {pluralise(allocation.daysLate, 'day')} late</span>
                 ) : null}
               </span>
               <span className="text-ink">
-                {formatMoney(allocation.interest)} interest + {formatMoney(allocation.principal)}{' '}
-                principal
+                {formatMoney(allocation.interest)}
+                <span className="text-ink-subtle"> int</span> + {formatMoney(allocation.principal)}
+                <span className="text-ink-subtle"> prin</span>
               </span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="text-[0.8125rem] text-ink-muted">
+        <p className="text-[0.75rem] leading-relaxed text-ink-muted">
           No instalment could absorb this payment; it is held as an unallocated credit.
         </p>
       )}
 
       {result.payment.unallocated.paise > 0 ? (
-        <p className="tabular text-[0.8125rem] text-ink-muted">
+        <p className="tabular text-[0.75rem] text-ink-muted">
           {formatMoney(result.payment.unallocated)} could not be allocated and is held as credit.
         </p>
       ) : null}

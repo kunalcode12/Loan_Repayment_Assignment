@@ -2,7 +2,13 @@ import type { ReactNode } from 'react'
 
 import { cn } from './cn'
 
-/** The one card shell every panel on the page is built from. */
+/**
+ * The one card shell every panel on the page is built from.
+ *
+ * Separation comes from a hairline border rather than a shadow: on a true-black
+ * canvas a drop shadow is invisible, and a line reads as structure rather than
+ * as floating chrome.
+ */
 export function Panel({
   children,
   className,
@@ -15,7 +21,7 @@ export function Panel({
   return (
     <section
       className={cn(
-        'rounded-2xl border border-border bg-surface shadow-soft',
+        'rounded-sharp border border-border bg-surface',
         padded && 'p-6 sm:p-8',
         className,
       )}
@@ -36,10 +42,12 @@ export function PanelHeader({
 }) {
   return (
     <header className="flex flex-wrap items-start justify-between gap-4">
-      <div className="space-y-1.5">
-        <h2 className="text-lg font-semibold tracking-[-0.02em] text-ink">{title}</h2>
+      <div className="space-y-2">
+        <h2 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-ink">{title}</h2>
         {description ? (
-          <p className="max-w-prose text-[0.875rem] leading-relaxed text-ink-muted">{description}</p>
+          <p className="max-w-prose text-[0.8125rem] leading-relaxed text-ink-muted">
+            {description}
+          </p>
         ) : null}
       </div>
       {action}
@@ -50,11 +58,11 @@ export function PanelHeader({
 type Tone = 'neutral' | 'positive' | 'warning' | 'danger' | 'info'
 
 const TONES: Record<Tone, string> = {
-  neutral: 'bg-accent-soft text-ink-muted',
-  positive: 'bg-positive-soft text-positive',
-  warning: 'bg-warning-soft text-warning',
-  danger: 'bg-danger-soft text-danger',
-  info: 'bg-info-soft text-info',
+  neutral: 'border-border-strong text-ink-muted',
+  positive: 'border-positive/35 text-positive bg-positive-soft',
+  warning: 'border-warning/35 text-warning bg-warning-soft',
+  danger: 'border-danger/35 text-danger bg-danger-soft',
+  info: 'border-info/35 text-info bg-info-soft',
 }
 
 export function Badge({
@@ -69,8 +77,8 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1',
-        'text-[0.6875rem] font-semibold tracking-[0.04em] uppercase whitespace-nowrap',
+        'rounded-sharp inline-flex items-center gap-1.5 border px-2 py-[3px]',
+        'text-[0.625rem] font-medium tracking-[0.08em] whitespace-nowrap uppercase',
         TONES[tone],
         className,
       )}
@@ -80,13 +88,14 @@ export function Badge({
   )
 }
 
+const DOT_TONES: Record<Tone, string> = {
+  neutral: 'bg-ink-subtle',
+  positive: 'bg-positive',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  info: 'bg-info',
+}
+
 export function Dot({ tone = 'neutral' }: { tone?: Tone }) {
-  const colour: Record<Tone, string> = {
-    neutral: 'bg-ink-subtle',
-    positive: 'bg-positive',
-    warning: 'bg-warning',
-    danger: 'bg-danger',
-    info: 'bg-info',
-  }
-  return <span className={cn('size-1.5 shrink-0 rounded-full', colour[tone])} />
+  return <span className={cn('size-1 shrink-0', DOT_TONES[tone])} />
 }

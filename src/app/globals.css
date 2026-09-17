@@ -8,6 +8,10 @@
  * token, never a raw colour and almost never a `dark:` variant, so the two
  * themes stay in step by construction.
  *
+ * The visual language is deliberately sharp: 2px radii, hairline borders
+ * instead of shadows, and high contrast. Panels are separated by lines, not by
+ * elevation, which is what makes dense financial tables readable.
+ *
  * `[data-theme]` is set on <html> by an inline script in the layout before
  * paint, so there is no flash of the wrong theme.
  */
@@ -15,63 +19,67 @@
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 :root {
-  --canvas: #fbfbfc;
+  --canvas: #ffffff;
   --surface: #ffffff;
-  --surface-muted: #f5f6f8;
-  --surface-raised: #ffffff;
+  --surface-muted: #f4f4f5;
+  --surface-raised: #fafafa;
+  --surface-inset: #f4f4f5;
 
-  --border: #e7e9ee;
-  --border-strong: #d3d7e0;
+  --border: #e4e4e7;
+  --border-strong: #d4d4d8;
+  --border-loud: #a1a1aa;
 
-  --ink: #0a0c10;
-  --ink-muted: #616a7a;
-  --ink-subtle: #8b93a1;
+  --ink: #09090b;
+  --ink-muted: #52525b;
+  --ink-subtle: #8f8f99;
 
-  --accent: #111318;
+  --accent: #09090b;
   --accent-ink: #ffffff;
-  --accent-soft: #f0f1f4;
+  --accent-soft: #f4f4f5;
 
-  --positive: #067a55;
-  --positive-soft: #e6f5ef;
-  --warning: #a65c00;
-  --warning-soft: #fdf1e0;
-  --danger: #c0271f;
-  --danger-soft: #fdeceb;
+  --positive: #047857;
+  --positive-soft: #ecfdf5;
+  --warning: #b45309;
+  --warning-soft: #fffbeb;
+  --danger: #be123c;
+  --danger-soft: #fff1f2;
   --info: #1d4ed8;
-  --info-soft: #eaefff;
+  --info-soft: #eff6ff;
 
-  --shadow-soft: 0 1px 2px rgb(10 12 16 / 0.04), 0 8px 24px -12px rgb(10 12 16 / 0.12);
-  --shadow-lift: 0 1px 2px rgb(10 12 16 / 0.05), 0 20px 40px -24px rgb(10 12 16 / 0.28);
+  --shimmer: rgb(0 0 0 / 0.045);
+  --grid-line: rgb(9 9 11 / 0.045);
 }
 
 [data-theme="dark"] {
-  --canvas: #08090b;
-  --surface: #0e1014;
-  --surface-muted: #14171d;
-  --surface-raised: #171a21;
+  --canvas: #000000;
+  --surface: #09090b;
+  --surface-muted: #111114;
+  --surface-raised: #141418;
+  --surface-inset: #050507;
 
-  --border: #20242e;
-  --border-strong: #2d3340;
+  --border: #1e1e23;
+  --border-strong: #2c2c33;
+  --border-loud: #52525b;
 
-  --ink: #f4f6fa;
-  --ink-muted: #949cab;
-  --ink-subtle: #6b7381;
+  --ink: #fafafa;
+  --ink-muted: #a1a1aa;
+  --ink-subtle: #6b6b76;
 
-  --accent: #f4f6fa;
-  --accent-ink: #0a0c10;
-  --accent-soft: #1b1f27;
+  --accent: #ffffff;
+  --accent-ink: #000000;
+  --accent-soft: #17171b;
 
   --positive: #34d399;
-  --positive-soft: #0d2b22;
+  --positive-soft: #06231a;
   --warning: #fbbf24;
-  --warning-soft: #2e2311;
-  --danger: #f87171;
-  --danger-soft: #2f1717;
-  --info: #7aa2ff;
-  --info-soft: #14203c;
+  --warning-soft: #241a05;
+  --danger: #fb7185;
+  --danger-soft: #2a0d14;
+  --info: #93b4ff;
+  --info-soft: #0c1730;
 
-  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px -12px rgb(0 0 0 / 0.7);
-  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.6), 0 24px 48px -24px rgb(0 0 0 / 0.9);
+  --shimmer: rgb(255 255 255 / 0.05);
+  --grid-line: rgb(255 255 255 / 0.035);
 }
 
 @theme inline {
@@ -79,9 +87,11 @@
   --color-surface: var(--surface);
   --color-surface-muted: var(--surface-muted);
   --color-surface-raised: var(--surface-raised);
+  --color-surface-inset: var(--surface-inset);
 
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
+  --color-border-loud: var(--border-loud);
 
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
@@ -103,8 +113,8 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  --shadow-soft: var(--shadow-soft);
-  --shadow-lift: var(--shadow-lift);
+  /* Sharp by default. Nothing in this UI is rounder than 2px. */
+  --radius-sharp: 2px;
 }
 
 @layer base {
@@ -128,6 +138,38 @@
     text-rendering: optimizeLegibility;
   }
 
+  /*
+   * Native <select> popups are drawn by the OS, not by us. Without an explicit
+   * background and colour on the options, a dark theme renders near-white text
+   * on the platform's default white popup, which is unreadable.
+   */
+  select {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
+
+  select option {
+    background-color: var(--surface);
+    color: var(--ink);
+  }
+
+  /* Make the native date picker indicator visible on a dark canvas. */
+  [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.55;
+    cursor: pointer;
+  }
+
+  [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+
   /* Money and dates must line up column-to-column in the schedule table. */
   .tabular {
     font-variant-numeric: tabular-nums;
@@ -140,9 +182,27 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--ink);
+    outline: 1px solid var(--ink);
     outline-offset: 2px;
-    border-radius: 6px;
+    border-radius: 0;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border: 3px solid var(--canvas);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-loud);
   }
 }
 
@@ -151,21 +211,28 @@
   .eyebrow {
     font-size: 0.6875rem;
     line-height: 1;
-    font-weight: 560;
-    letter-spacing: 0.09em;
+    font-weight: 500;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--ink-subtle);
   }
 
-  .hairline {
-    background-image: linear-gradient(to right, transparent, var(--border) 12%, var(--border) 88%, transparent);
-    height: 1px;
+  /* Faint engineering grid, used behind the sign-in panel. */
+  .grid-bg {
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .grid-fade {
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
   }
 
   @keyframes rise {
     from {
       opacity: 0;
-      transform: translateY(10px);
+      transform: translateY(8px);
     }
     to {
       opacity: 1;
@@ -174,7 +241,20 @@
   }
 
   .animate-rise {
-    animation: rise 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: rise 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade {
+    animation: fade-in 0.28s ease-out both;
   }
 
   @keyframes spin-slow {
@@ -184,12 +264,39 @@
   }
 
   .animate-spin-slow {
-    animation: spin-slow 0.9s linear infinite;
+    animation: spin-slow 0.7s linear infinite;
+  }
+
+  /*
+   * Skeleton placeholder. The sweep runs on a pseudo-element so the block
+   * itself keeps a flat background and does not flicker in either theme.
+   */
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--surface-muted);
+  }
+
+  .skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background-image: linear-gradient(90deg, transparent, var(--shimmer), transparent);
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .animate-rise,
-    .animate-spin-slow {
+    .animate-fade,
+    .animate-spin-slow,
+    .skeleton::after {
       animation: none;
     }
   }

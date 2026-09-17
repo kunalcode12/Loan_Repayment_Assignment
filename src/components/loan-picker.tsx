@@ -9,12 +9,23 @@ export interface LoanOption {
   position: PositionDto
 }
 
+function describe(position: PositionDto): string {
+  if (position.status === 'CLOSED') return 'closed'
+  if (position.overdueAmount.paise > 0) return `${formatMoneyWhole(position.overdueAmount)} overdue`
+  return 'on track'
+}
+
 /**
  * Chooses which loan is on screen.
  *
- * A native `<select>` rather than a bespoke dropdown: it is keyboard accessible
- * and usable on a phone for free, and the list can grow to hundreds of loans
+ * A native `<select>`, not a bespoke dropdown: it is keyboard accessible and
+ * usable on a phone for free, and the list can grow to hundreds of loans
  * without any of this code changing.
+ *
+ * The popup itself is drawn by the operating system, so it cannot be styled
+ * with utility classes — `select` and `select option` get explicit background
+ * and colour in `globals.css`, without which the dark theme renders near-white
+ * text on the platform's default white popup.
  */
 export function LoanPicker({
   options,
@@ -27,43 +38,46 @@ export function LoanPicker({
   onSelect: (loanId: string) => void
   disabled?: boolean
 }) {
+  const isEmpty = options.length === 0
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       <label htmlFor="loan-picker" className="eyebrow">
         Loan
       </label>
+
       <div
         className={cn(
-          'relative flex items-center rounded-xl border border-border-strong bg-surface',
-          'focus-within:border-ink focus-within:ring-[3px] focus-within:ring-ink/8',
+          'rounded-sharp relative flex items-center border bg-surface-inset',
+          'transition-colors duration-150',
+          'focus-within:border-ink',
+          disabled || isEmpty ? 'border-border' : 'border-border-strong hover:border-border-loud',
         )}
       >
         <select
           id="loan-picker"
           value={selectedId ?? ''}
-          disabled={disabled || options.length === 0}
+          disabled={disabled || isEmpty}
           onChange={(event) => onSelect(event.target.value)}
           className={cn(
-            'h-12 w-full appearance-none bg-transparent pl-4 pr-10 text-[0.9375rem] text-ink',
-            'outline-none disabled:opacity-50 sm:min-w-[22rem]',
+            'h-11 w-full appearance-none bg-transparent pr-9 pl-3.5',
+            'text-[0.8125rem] text-ink outline-none',
+            'disabled:cursor-not-allowed disabled:text-ink-subtle',
+            'sm:min-w-[20rem]',
           )}
         >
-          {options.length === 0 ? <option value="">No loans yet</option> : null}
+          {isEmpty ? <option value="">No loans yet</option> : null}
           {options.map(({ loan, position }) => (
             <option key={loan.id} value={loan.id}>
-              {loan.reference} · {formatMoneyWhole(loan.principal)} ·{' '}
-              {position.overdueAmount.paise > 0
-                ? `${formatMoneyWhole(position.overdueAmount)} overdue`
-                : position.status === 'CLOSED'
-                  ? 'closed'
-                  : 'on track'}
+              {`${loan.reference}  ·  ${formatMoneyWhole(loan.principal)}  ·  ${describe(position)}`}
             </option>
           ))}
         </select>
+
         <svg
           viewBox="0 0 20 20"
           aria-hidden="true"
-          className="pointer-events-none absolute right-3.5 size-4 text-ink-subtle"
+          className="pointer-events-none absolute right-3 size-3.5 text-ink-subtle"
         >
           <path
             d="m5.5 8 4.5 4.5L14.5 8"

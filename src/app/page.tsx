@@ -1,9 +1,9 @@
 'use client'
 
 import { useAuth } from '@/auth/auth-provider'
+import { Brand } from '@/components/brand'
 import { Dashboard } from '@/components/dashboard'
 import { SignInPanel } from '@/components/sign-in-panel'
-import { Spinner } from '@/components/ui/spinner'
 
 /**
  * The single page of the application.
@@ -18,8 +18,14 @@ export default function Page() {
 
   if (status === 'loading') {
     return (
-      <div className="grid min-h-dvh place-items-center">
-        <Spinner className="size-6 text-ink-subtle" />
+      <div className="grid min-h-dvh place-items-center" aria-busy="true">
+        <div className="animate-fade flex flex-col items-center gap-5">
+          <Brand />
+          <span className="h-px w-24 overflow-hidden bg-border">
+            <span className="skeleton block h-full w-full" />
+          </span>
+          <span className="sr-only">Restoring your session</span>
+        </div>
       </div>
     )
   }

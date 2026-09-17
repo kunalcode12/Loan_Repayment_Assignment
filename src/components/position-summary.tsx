@@ -9,15 +9,15 @@ import {
   formatPercent,
   pluralise,
 } from '@/lib/format'
-import { Badge, Dot, Panel } from './ui/surface'
+import { Badge, Dot } from './ui/surface'
 import { cn } from './ui/cn'
 
 /**
  * The loan's current position.
  *
  * The three figures the brief asks to be visible — outstanding principal, the
- * next due date and amount, and any overdue amount — are the three tiles below
- * the headline, in that order. Overdue is styled as an alert only when there
+ * next due date and amount, and any overdue amount — are the three tiles across
+ * the bottom, in that order. Overdue is styled as an alert only when there
  * actually is one, so a healthy loan reads as calm.
  */
 export function PositionSummary({ loan, position }: { loan: LoanDto; position: PositionDto }) {
@@ -25,58 +25,57 @@ export function PositionSummary({ loan, position }: { loan: LoanDto; position: P
   const isClosed = position.status === 'CLOSED'
 
   return (
-    <Panel className="overflow-hidden" padded={false}>
-      <div className="flex flex-col gap-8 p-6 sm:p-8">
-        <div className="flex flex-wrap items-start justify-between gap-5">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="font-mono text-[0.8125rem] tracking-[0.04em] text-ink-muted">
-                {loan.reference}
-              </span>
-              {isClosed ? (
-                <Badge tone="positive">
-                  <Dot tone="positive" />
-                  Closed
-                </Badge>
-              ) : isOverdue ? (
-                <Badge tone="danger">
-                  <Dot tone="danger" />
-                  {pluralise(position.overdueInstallmentCount, 'instalment')} overdue
-                </Badge>
-              ) : (
-                <Badge tone="positive">
-                  <Dot tone="positive" />
-                  On track
-                </Badge>
-              )}
-            </div>
+    <section className="rounded-sharp animate-fade border border-border bg-surface">
+      <div className="grid gap-10 p-6 sm:p-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-16">
+        <div className="min-w-0 space-y-6">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="rounded-sharp border border-border-strong px-2 py-[3px] font-mono text-[0.6875rem] tracking-[0.08em] text-ink-muted">
+              {loan.reference}
+            </span>
+            {isClosed ? (
+              <Badge tone="positive">
+                <Dot tone="positive" />
+                Settled
+              </Badge>
+            ) : isOverdue ? (
+              <Badge tone="danger">
+                <Dot tone="danger" />
+                {pluralise(position.overdueInstallmentCount, 'instalment')} overdue
+              </Badge>
+            ) : (
+              <Badge tone="positive">
+                <Dot tone="positive" />
+                On track
+              </Badge>
+            )}
+          </div>
 
+          <div className="space-y-3">
             <p className="eyebrow">Total outstanding</p>
-            <p className="tabular text-[2.75rem] leading-[0.95] font-semibold tracking-[-0.04em] text-ink sm:text-[3.5rem]">
+            <p className="tabular text-[3rem] leading-[0.9] font-semibold tracking-[-0.045em] text-ink sm:text-[4rem]">
               {formatMoneyWhole(position.totalOutstanding)}
-            </p>
-            <p className="tabular text-[0.875rem] text-ink-muted">
-              {formatMoney(position.totalPaid)} repaid of {formatMoney(loan.totalPayable)}
             </p>
           </div>
 
-          <dl className="grid shrink-0 grid-cols-2 gap-x-10 gap-y-4 text-[0.875rem] sm:grid-cols-1 sm:gap-y-3.5">
-            <Fact label="Principal" value={formatMoneyWhole(loan.principal)} />
-            <Fact label="Rate" value={`${formatPercent(loan.annualInterestRate)} p.a.`} />
-            <Fact label="Tenure" value={pluralise(loan.tenureMonths, 'month')} />
-            <Fact label="Instalment" value={formatMoney(loan.emi)} />
-            <Fact label="Disbursed" value={formatDate(loan.disbursementDate)} />
-          </dl>
+          <ProgressBar position={position} totalPayable={loan.totalPayable.paise} />
         </div>
 
-        <ProgressBar position={position} totalPayable={loan.totalPayable.paise} />
+        {/* Loan terms, as a definition list that reads like a term sheet. */}
+        <dl className="grid shrink-0 grid-cols-2 gap-x-10 gap-y-0 text-[0.8125rem] lg:w-64 lg:grid-cols-1">
+          <Fact label="Principal" value={formatMoneyWhole(loan.principal)} />
+          <Fact label="Rate" value={`${formatPercent(loan.annualInterestRate)} p.a.`} />
+          <Fact label="Tenure" value={pluralise(loan.tenureMonths, 'month')} />
+          <Fact label="Instalment" value={formatMoney(loan.emi)} />
+          <Fact label="Disbursed" value={formatDate(loan.disbursementDate)} />
+          <Fact label="Total payable" value={formatMoneyWhole(loan.totalPayable)} />
+        </dl>
       </div>
 
       <div className="grid grid-cols-1 border-t border-border sm:grid-cols-3">
         <Metric
           label="Outstanding principal"
           value={formatMoney(position.outstandingPrincipal)}
-          caption={`plus ${formatMoney(position.outstandingInterest)} interest still to accrue`}
+          caption={`+ ${formatMoney(position.outstandingInterest)} interest still to accrue`}
         />
         <Metric
           label="Next instalment"
@@ -102,18 +101,18 @@ export function PositionSummary({ loan, position }: { loan: LoanDto; position: P
       </div>
 
       {position.excessCredit.paise > 0 ? (
-        <p className="border-t border-border bg-info-soft px-6 py-4 text-[0.8125rem] text-ink sm:px-8">
-          <span className="font-semibold">{formatMoney(position.excessCredit)}</span> was received
-          beyond the full value of this schedule and is held as an unallocated credit.
+        <p className="border-t border-border bg-info-soft px-6 py-3.5 text-[0.75rem] leading-relaxed text-ink sm:px-8">
+          <span className="tabular font-semibold">{formatMoney(position.excessCredit)}</span> was
+          received beyond the full value of this schedule and is held as an unallocated credit.
         </p>
       ) : null}
-    </Panel>
+    </section>
   )
 }
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline gap-3 sm:justify-between">
+    <div className="flex items-baseline justify-between gap-3 border-b border-border py-2.5 last:border-b-0">
       <dt className="text-ink-subtle">{label}</dt>
       <dd className="tabular font-medium text-ink">{value}</dd>
     </div>
@@ -134,17 +133,17 @@ function Metric({
   className?: string
 }) {
   return (
-    <div className={cn('px-6 py-6 sm:px-8', className)}>
+    <div className={cn('px-6 py-5 sm:px-8', className)}>
       <p className="eyebrow">{label}</p>
       <p
         className={cn(
-          'tabular mt-3 text-[1.625rem] leading-none font-semibold tracking-[-0.03em]',
+          'tabular mt-3 text-[1.5rem] leading-none font-semibold tracking-[-0.035em]',
           tone === 'danger' ? 'text-danger' : 'text-ink',
         )}
       >
         {value}
       </p>
-      <p className="mt-2.5 text-[0.8125rem] leading-relaxed text-ink-muted">{caption}</p>
+      <p className="mt-2.5 text-[0.75rem] leading-relaxed text-ink-muted">{caption}</p>
     </div>
   )
 }
@@ -153,27 +152,30 @@ function ProgressBar({ position, totalPayable }: { position: PositionDto; totalP
   const paid = position.totalPaid.paise
   const overdue = position.overdueAmount.paise
   const paidPercent = totalPayable > 0 ? Math.min(100, (paid / totalPayable) * 100) : 0
-  const overduePercent = totalPayable > 0 ? Math.min(100 - paidPercent, (overdue / totalPayable) * 100) : 0
+  const overduePercent =
+    totalPayable > 0 ? Math.min(100 - paidPercent, (overdue / totalPayable) * 100) : 0
 
   return (
     <div className="space-y-2.5">
       <div
-        className="flex h-2 w-full overflow-hidden rounded-full bg-surface-muted"
+        className="flex h-1.5 w-full overflow-hidden bg-surface-muted"
         role="img"
-        aria-label={`${paidPercent.toFixed(0)}% of the total payable has been repaid`}
+        aria-label={`${paidPercent.toFixed(0)} per cent of the total payable has been repaid`}
       >
         <span
-          className="h-full bg-ink transition-[width] duration-500"
+          className="h-full bg-ink transition-[width] duration-700 ease-out"
           style={{ width: `${paidPercent}%` }}
         />
         <span
-          className="h-full bg-danger transition-[width] duration-500"
+          className="h-full bg-danger transition-[width] duration-700 ease-out"
           style={{ width: `${overduePercent}%` }}
         />
       </div>
-      <div className="tabular flex justify-between text-[0.75rem] text-ink-subtle">
-        <span>{paidPercent.toFixed(0)}% repaid</span>
-        <span>Position as of {formatDate(position.asOf)}</span>
+      <div className="tabular flex flex-wrap justify-between gap-2 text-[0.6875rem] text-ink-subtle">
+        <span>
+          {formatMoney(position.totalPaid)} repaid · {paidPercent.toFixed(0)}%
+        </span>
+        <span>As of {formatDate(position.asOf)}</span>
       </div>
     </div>
   )
