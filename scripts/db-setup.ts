@@ -17,6 +17,14 @@ import { runMigrations } from '@/db/migrate'
  */
 async function main(): Promise<void> {
   if (!process.env.DATABASE_URL) {
+    // `--skip-if-unconfigured` is used by the Vercel build, where migrating on
+    // deploy is desirable but a build without database secrets (a preview from
+    // a fork, for instance) should still succeed. Run interactively, a missing
+    // DATABASE_URL is a setup mistake and fails loudly.
+    if (process.argv.includes('--skip-if-unconfigured')) {
+      console.warn('DATABASE_URL is not set — skipping migrations.')
+      return
+    }
     throw new Error('DATABASE_URL is not set. Copy .env.example to .env.local and fill it in.')
   }
 
