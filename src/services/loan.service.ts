@@ -23,12 +23,6 @@ export interface LoanDetail {
   payments: Payment[]
 }
 
-/**
- * Create a loan and persist its complete repayment schedule.
- *
- * The loan row and all of its instalments are written in one transaction: a
- * loan without a schedule, or a partial schedule, is never visible to a reader.
- */
 export async function createLoan(input: CreateLoanInput): Promise<LoanDetail> {
   const schedule = generateSchedule({
     principal: input.principal,

@@ -33,25 +33,7 @@ export interface RecordPaymentResult {
   loan: LoanDetail
 }
 
-/**
- * Record a payment against a loan and allocate it across the schedule.
- *
- * ## Duplicate submission
- *
- * Every request carries an `idempotencyKey`. Sending the same payment twice —
- * a double-clicked button, a retried request, a webhook delivered twice —
- * reuses the key, and the second attempt returns the *original* payment and its
- * original allocation without touching a single balance.
- *
- * This is enforced in two layers. The cheap check below catches the ordinary
- * case. The real guarantee is the `payments_idempotency_key_unique` constraint:
- * if two identical requests race past the check concurrently, the database
- * rejects the loser, and the `catch` turns that rejection back into the same
- * replayed response. Application-level checking alone cannot do this.
- *
- * Reusing a key with a *different* payload is a client bug, not a retry, so it
- * is reported as a 409 rather than silently returning the wrong payment.
- */
+
 export async function recordPayment(input: RecordPaymentInput): Promise<RecordPaymentResult> {
   const asOf = input.asOf ?? today()
 
