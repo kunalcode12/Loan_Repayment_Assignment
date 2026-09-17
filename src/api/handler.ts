@@ -4,6 +4,7 @@ import { ZodError } from 'zod'
 
 import { authenticateRequest } from '@/auth/authenticate-request'
 import type { AuthenticatedUser } from '@/auth/verify-token'
+import { describeDatabaseError } from '@/db/errors'
 import { AppError, isAppError } from '@/lib/errors'
 import { failure } from './responses'
 
@@ -61,6 +62,7 @@ function toAppError(error: unknown, requestId: string, request: NextRequest): Ap
     return AppError.validation('The request body failed validation.', zodIssues(error))
   }
 
+  // Always log the real failure, whatever we end up telling the client.
   console.error(
     JSON.stringify({
       level: 'error',
@@ -68,11 +70,16 @@ function toAppError(error: unknown, requestId: string, request: NextRequest): Ap
       method: request.method,
       path: new URL(request.url).pathname,
       message: error instanceof Error ? error.message : String(error),
+      code: (error as { code?: unknown } | null)?.code,
       stack: error instanceof Error ? error.stack : undefined,
     }),
   )
 
-  return AppError.internal()
+  // A database misconfiguration is reported as an actionable 503 rather than an
+  // opaque 500, because it is the failure an operator hits on a fresh
+  // deployment and the message is the difference between a five-second fix and
+  // a log-diving session. None of these messages echo the connection string.
+  return describeDatabaseError(error) ?? AppError.internal()
 }
 
 export function zodIssues(error: ZodError): { field: string; message: string }[] {

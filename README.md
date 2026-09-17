@@ -9,7 +9,14 @@ Next.js 16 (App Router) · React 19 · PostgreSQL (Supabase) · Firebase Authent
 
 ## Setup
 
-Requires **Node.js 20.9+** (developed on 24) and a PostgreSQL 13+ database.
+Requires **Node.js 22.12 or newer** (developed on 24) and a PostgreSQL 13+ database.
+
+The floor is 22.12 rather than Next.js's own 20.9, and `engines.node` in `package.json` says so:
+`firebase-admin@14` requires Node ≥22, and it reaches `jose@6` — which is pure ESM — through
+`jwks-rsa` via `require()`. `require()` of an ES module is only unflagged from Node 22.12, so an
+older runtime throws `ERR_REQUIRE_ESM` the first time a request is authenticated. Next.js keeps
+`firebase-admin` external rather than bundling it (it is on Next's default
+`serverExternalPackages` list), so the native `require` is what runs.
 
 ```bash
 npm install
@@ -280,6 +287,9 @@ Deployment is out of scope per the brief, but the repository is ready for it.
    serverless functions open far more connections than a direct Postgres endpoint will accept.
 4. Add the deployed domain under **Firebase console → Authentication → Settings → Authorized
    domains**, or Google sign-in will fail there.
+5. Confirm **Settings → Node.js Version** is **22.x or newer**. `engines.node` in `package.json`
+   already asks for this; if the platform is pinned to an older runtime, every authenticated
+   request fails with `ERR_REQUIRE_ESM` from `firebase-admin` (see the Node requirement above).
 
 `npm run vercel-build` runs the migrations and then builds, so a deploy brings the schema up to
 date on its own. It is safe on every deploy: migrations are idempotent and serialised by an
