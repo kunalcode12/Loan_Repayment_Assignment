@@ -124,5 +124,11 @@ export function parseLoanId(value: string | undefined): string {
 /** Optional `?asOf=YYYY-MM-DD` used to ask for the position on a given date. */
 export function parseAsOf(value: string | null): IsoDate | undefined {
   if (value === null || value.trim() === '') return undefined
-  return parseIsoDate(value.trim(), 'asOf')
+  const trimmed = value.trim()
+  if (!isIsoDate(trimmed)) {
+    throw AppError.validation('The asOf query parameter is not a valid date.', [
+      { field: 'asOf', message: 'Must be a real calendar date formatted as YYYY-MM-DD.' },
+    ])
+  }
+  return parseIsoDate(trimmed, 'asOf')
 }
