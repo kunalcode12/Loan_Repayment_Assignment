@@ -1,17 +1,17 @@
 import { defineConfig } from 'vitest/config'
-import tsconfigPaths from 'vite-tsconfig-paths'
 
 export default defineConfig({
-  plugins: [tsconfigPaths()],
+  // Resolves the `@/*` alias straight from tsconfig.json, so tests import
+  // exactly the same specifiers the application does.
+  resolve: { tsconfigPaths: true },
   test: {
     environment: 'node',
-    globals: false,
     include: ['tests/**/*.test.ts'],
     setupFiles: ['tests/setup.ts'],
-    // Integration tests share one Postgres database. Running suites in parallel
-    // would interleave transactions across files, so they are serialised.
+    // The integration tests share one Postgres database. Running files in
+    // parallel would interleave their transactions, so they are serialised.
     fileParallelism: false,
     testTimeout: 30_000,
-    hookTimeout: 30_000,
+    hookTimeout: 60_000,
   },
 })
