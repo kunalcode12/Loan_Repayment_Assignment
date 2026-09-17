@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
 import { THEME_STORAGE_KEY } from './theme-script'
 import { cn } from './ui/cn'
@@ -10,42 +10,56 @@ type Theme = 'light' | 'dark'
 /**
  * Light/dark switch.
  *
- * The current theme is read from the `data-theme` attribute that `ThemeScript`
- * has already set, rather than kept in React state from the start — that way the
- * button never disagrees with what is on screen during hydration.
+ * The theme lives on `<html data-theme>`, which `ThemeScript` sets before the
+ * first paint. That attribute — not React state — is the source of truth, so
+ * this reads it through `useSyncExternalStore`: during hydration the server
+ * snapshot is `null` and nothing is rendered, and immediately afterwards the
+ * button shows the icon that matches what is actually on screen. There is no
+ * moment where the two disagree.
  */
-export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme | null>(null)
+const listeners = new Set<() => void>()
 
-  useEffect(() => {
-    const current = document.documentElement.getAttribute('data-theme')
-    setTheme(current === 'dark' ? 'dark' : 'light')
-  }, [])
-
-  function toggle() {
-    const next: Theme = theme === 'dark' ? 'light' : 'dark'
-    document.documentElement.setAttribute('data-theme', next)
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, next)
-    } catch {
-      // Private browsing can refuse storage; the theme still applies for this
-      // page view, it just will not be remembered.
-    }
-    setTheme(next)
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
   }
+}
+
+function getSnapshot(): Theme {
+  return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
+}
+
+/** The server cannot know the theme, so it renders no icon at all. */
+function getServerSnapshot(): Theme | null {
+  return null
+}
+
+function applyTheme(next: Theme): void {
+  document.documentElement.setAttribute('data-theme', next)
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, next)
+  } catch {
+    // Private browsing can refuse storage. The theme still applies to this page
+    // view; it just will not be remembered.
+  }
+  for (const listener of listeners) listener()
+}
+
+export function ThemeToggle() {
+  const theme = useSyncExternalStore<Theme | null>(subscribe, getSnapshot, getServerSnapshot)
 
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={() => applyTheme(theme === 'dark' ? 'light' : 'dark')}
       aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
       className={cn(
-        'inline-flex size-10 items-center justify-center rounded-xl',
-        'border border-border text-ink-muted',
-        'transition-colors hover:border-border-strong hover:text-ink',
+        'rounded-sharp inline-flex size-9 items-center justify-center',
+        'border border-border-strong text-ink-muted',
+        'transition-colors duration-150 hover:border-border-loud hover:text-ink',
       )}
     >
-      {/* Render nothing until the theme is known, so the icon cannot flip on hydration. */}
       {theme === null ? null : theme === 'dark' ? <SunIcon /> : <MoonIcon />}
     </button>
   )
