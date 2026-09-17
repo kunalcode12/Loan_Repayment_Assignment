@@ -1,26 +1,196 @@
 @import "tailwindcss";
 
+/*
+ * Theme.
+ *
+ * Every colour is a semantic token (surface, border, muted, positive, ...)
+ * defined twice: once for light and once for dark. Components reference the
+ * token, never a raw colour and almost never a `dark:` variant, so the two
+ * themes stay in step by construction.
+ *
+ * `[data-theme]` is set on <html> by an inline script in the layout before
+ * paint, so there is no flash of the wrong theme.
+ */
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #fbfbfc;
+  --surface: #ffffff;
+  --surface-muted: #f5f6f8;
+  --surface-raised: #ffffff;
+
+  --border: #e7e9ee;
+  --border-strong: #d3d7e0;
+
+  --ink: #0a0c10;
+  --ink-muted: #616a7a;
+  --ink-subtle: #8b93a1;
+
+  --accent: #111318;
+  --accent-ink: #ffffff;
+  --accent-soft: #f0f1f4;
+
+  --positive: #067a55;
+  --positive-soft: #e6f5ef;
+  --warning: #a65c00;
+  --warning-soft: #fdf1e0;
+  --danger: #c0271f;
+  --danger-soft: #fdeceb;
+  --info: #1d4ed8;
+  --info-soft: #eaefff;
+
+  --shadow-soft: 0 1px 2px rgb(10 12 16 / 0.04), 0 8px 24px -12px rgb(10 12 16 / 0.12);
+  --shadow-lift: 0 1px 2px rgb(10 12 16 / 0.05), 0 20px 40px -24px rgb(10 12 16 / 0.28);
+}
+
+[data-theme="dark"] {
+  --canvas: #08090b;
+  --surface: #0e1014;
+  --surface-muted: #14171d;
+  --surface-raised: #171a21;
+
+  --border: #20242e;
+  --border-strong: #2d3340;
+
+  --ink: #f4f6fa;
+  --ink-muted: #949cab;
+  --ink-subtle: #6b7381;
+
+  --accent: #f4f6fa;
+  --accent-ink: #0a0c10;
+  --accent-soft: #1b1f27;
+
+  --positive: #34d399;
+  --positive-soft: #0d2b22;
+  --warning: #fbbf24;
+  --warning-soft: #2e2311;
+  --danger: #f87171;
+  --danger-soft: #2f1717;
+  --info: #7aa2ff;
+  --info-soft: #14203c;
+
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.5), 0 8px 24px -12px rgb(0 0 0 / 0.7);
+  --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.6), 0 24px 48px -24px rgb(0 0 0 / 0.9);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-positive: var(--positive);
+  --color-positive-soft: var(--positive-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lift: var(--shadow-lift);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  [data-theme="dark"] {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Money and dates must line up column-to-column in the schedule table. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  ::selection {
+    background-color: var(--ink);
+    color: var(--canvas);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+    border-radius: 6px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Tight, wide, uppercase label used above every metric. */
+  .eyebrow {
+    font-size: 0.6875rem;
+    line-height: 1;
+    font-weight: 560;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-subtle);
+  }
+
+  .hairline {
+    background-image: linear-gradient(to right, transparent, var(--border) 12%, var(--border) 88%, transparent);
+    height: 1px;
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  .animate-rise {
+    animation: rise 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes spin-slow {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 0.9s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-rise,
+    .animate-spin-slow {
+      animation: none;
+    }
+  }
 }

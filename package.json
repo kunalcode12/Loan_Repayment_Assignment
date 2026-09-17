@@ -6,7 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "next typegen && tsc --noEmit",
+    "db:setup": "tsx scripts/db-setup.ts",
+    "db:seed": "tsx scripts/seed.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run tests/unit"
   },
   "dependencies": {
     "firebase": "^12.19.0",

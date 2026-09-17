@@ -2,15 +2,18 @@ import { loadEnv } from './load-env'
 
 loadEnv()
 
-// Imported after `loadEnv()` so the pool reads a populated environment.
-const { runMigrations } = await import('@/db/migrate')
-const { closePool } = await import('@/db/client')
+import { closePool } from '@/db/client'
+import { runMigrations } from '@/db/migrate'
 
 /**
  * `npm run db:setup`
  *
  * Creates the schema from `src/db/migrations`. Safe to run repeatedly: already
  * applied migrations are skipped.
+ *
+ * `loadEnv()` runs before anything touches the database. Imports are hoisted
+ * above it, which is harmless here because every module reads its configuration
+ * lazily — the pool is not constructed until the first query.
  */
 async function main(): Promise<void> {
   if (!process.env.DATABASE_URL) {
@@ -27,12 +30,10 @@ async function main(): Promise<void> {
   }
 }
 
-try {
-  await main()
-} catch (error) {
-  console.error('\nDatabase setup failed:')
-  console.error(error instanceof Error ? error.message : error)
-  process.exitCode = 1
-} finally {
-  await closePool()
-}
+main()
+  .catch((error: unknown) => {
+    console.error('\nDatabase setup failed:')
+    console.error(error instanceof Error ? error.message : error)
+    process.exitCode = 1
+  })
+  .finally(() => closePool())
